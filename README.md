@@ -1,7 +1,7 @@
 
 # Belt
 
-A simple signaling server built for Rigel
+A simple signaling server built for [Rigel](https://github.com/ogukei/rigel)
 
 ```
 go get "github.com/google/uuid"
