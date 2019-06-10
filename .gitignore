@@ -1,0 +1,8 @@
+
+
+*.swp
+.vscode/
+
+*.tmp
+
+/main
