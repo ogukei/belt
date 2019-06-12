@@ -166,9 +166,11 @@ class Session {
 		this.channel.invoke('answer', sdp);
 	}
 
-	ice(candidate) {
+	ice(event) {
+		const candidate = event.candidate;
+		if (!candidate) return;
 		this.candidates.push(candidate);
-		if (!this.buffering) {
+		if (!this.buffering && this.candidates.length > 0) {
 			const ices = JSON.stringify(this.candidates);
 			this.candidates.length = 0;
 			this.channel.invoke('candidate', ices);
