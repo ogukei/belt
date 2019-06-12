@@ -36,7 +36,12 @@ var homeTemplate = template.Must(template.New("").Parse(`
 <head>
 <title>WebRTC C++ Native Vulkan</title>
 <style>
-html,body { margin:0px; overflow: hidden; } 
+html,body {
+	margin:0px;
+	overflow: hidden;
+	position: fixed;
+	-webkit-user-select: none;
+}
 </style>
 </head>
 <body>
@@ -47,7 +52,7 @@ html,body { margin:0px; overflow: hidden; }
 (() => {
 'use strict';
 
-class Control {
+class MouseControl {
 	constructor(datachannel) {
 		this.datachannel = datachannel;
 		this.area = document.getElementById('area');
@@ -75,7 +80,7 @@ class Control {
 		const data = ['m',
 			deltaX.toString(10),
 			deltaY.toString(10)].join(',');
-		this.datachannel.send(data);
+			this.datachannel.send(data);
 	}
 
 	mouseup(event) {
@@ -88,6 +93,50 @@ class Control {
 	}
 }
 
+class TouchControl {
+	constructor(datachannel) {
+		this.datachannel = datachannel;
+		this.area = document.getElementById('area');
+		this.area.addEventListener('touchstart', this.start.bind(this));
+		this.area.addEventListener('touchmove', this.move.bind(this));
+		this.area.addEventListener('touchend', this.end.bind(this));
+		this.tracking = false;
+		this.x = 0;
+		this.y = 0;
+	}
+
+	start(event) {
+		const touch = event.touches[0];
+		this.x = touch.clientX;
+		this.y = touch.clientY;
+		this.tracking = true;
+	}
+
+	move(event) {
+		if (!this.tracking) return;
+		const touch = event.touches[0];
+		const deltaX = touch.clientX - this.x;
+		const deltaY = touch.clientY - this.y;
+		this.x = touch.clientX;
+		this.y = touch.clientY;
+		const data = ['m',
+			deltaX.toString(10),
+			deltaY.toString(10)].join(',');
+			this.datachannel.send(data);
+	}
+
+	end(event) {
+		this.tracking = false;
+	}
+}
+
+class Control {
+	constructor(datachannel) {
+		this.mouse = new MouseControl(datachannel);
+		this.touch = new TouchControl(datachannel);
+	}
+}
+
 class Session {
 	constructor(channel, desc) {
 		this.channel = channel;
@@ -96,7 +145,7 @@ class Session {
 		this.connection = new RTCPeerConnection(this.configuration);
 		this.connection.onicecandidate = this.ice.bind(this);
 		this.connection.ondatachannel = this.datachannel.bind(this);
-		this.connection.onaddstream = this.stream.bind(this);
+		this.connection.ontrack = this.track.bind(this);
 		// start negotiation
 		(async () => {
 			await this.negotiation(desc);
@@ -105,7 +154,7 @@ class Session {
 
 	get configuration() {
 		return {
-			iceServers: [{ url: 'stun:stun.l.google.com:19302' }]
+			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 		};
 	}
 
@@ -145,8 +194,8 @@ class Session {
 		this.channel.invoke('acquire', '');
 	}
 
-	stream(event) {
-		const stream = event.stream;
+	track(event) {
+		const stream = event.streams[0];
 		const video = document.getElementById('video');
 		video.srcObject = stream;
 	}
