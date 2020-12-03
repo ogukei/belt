@@ -10,10 +10,14 @@ import (
 )
 
 var bind = flag.String("bind", "127.0.0.1:8080", "bind address")
-var endpoint = flag.String("endpoint", "127.0.0.1:8080", "WebSocket address")
+var endpoint = flag.String("endpoint", "", "WebSocket address")
 
 func home(w http.ResponseWriter, r *http.Request) {
-	homeTemplate.Execute(w, fmt.Sprintf("ws://%s/ws", *endpoint))
+	host := *endpoint
+	if host == "" {
+		host = r.Host
+	}
+	homeTemplate.Execute(w, fmt.Sprintf("ws://%s/ws", host))
 }
 
 func main() {
