@@ -6,13 +6,14 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"fmt"
 )
 
-var addr = flag.String("addr", "127.0.0.1:8080", "bind address")
+var bind = flag.String("bind", "127.0.0.1:8080", "bind address")
+var endpoint = flag.String("endpoint", "127.0.0.1:8080", "WebSocket address")
 
-// open http://localhost:8080/ using chrome for debugging
 func home(w http.ResponseWriter, r *http.Request) {
-	homeTemplate.Execute(w, "ws://localhost:8080/ws")
+	homeTemplate.Execute(w, fmt.Sprintf("ws://%s/ws", *endpoint))
 }
 
 func main() {
@@ -27,7 +28,7 @@ func main() {
 		serveClientWs(hub, w, r)
 	})
 	http.HandleFunc("/", home)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	log.Fatal(http.ListenAndServe(*bind, nil))
 }
 
 var homeTemplate = template.Must(template.New("").Parse(`
